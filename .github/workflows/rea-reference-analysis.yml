@@ -1,0 +1,44 @@
+
+name: Analyze Reference Video
+
+on:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Rea Video
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Rea Video
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[ocr]"
+
+      - name: Download Reference Video
+        run: |
+          curl -fL "https://raw.githubusercontent.com/amirpallllll-dotcom/dissect/main/Why%20Perfect%20Railroads%20Don_t%20Work%28720P_HD%29.mp4" -o reference.mp4
+
+      - name: Analyze Video
+        run: |
+          rea-video decompose reference.mp4 -o output/reference --lang en
+          rea-video summary output/reference/breakdown.json
+
+      - name: Save Analysis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rea-video-analysis
+          path: output/
+          if-no-files-found: warn
